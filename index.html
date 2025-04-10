@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIS</title>
+    <link rel="stylesheet" href="view/style.css">
+    <script src="view/load_image.js" defer></script>
+</head>
+<body>
+    <form id="upload-form" enctype="multipart/form-data">
+        <div class="upload-area" id="drop-area">
+            <p>Drag an image or press the button</p>
+            <label class="btn" for="fileElem">Load image</label>
+            <input type="file" id="fileElem" name="image" accept="image/*">
+        </div>
+        
+        <div class="preview" id="preview">
+            <p>No image loaded</p>
+        </div>
+        <div>
+            <button type="submit" class="btn" id="process-btn">Process</button>
+            <button type="reset" class="btn" id="reset-btn">Reset</button>
+        </div>
+    </form>
+    
+    <div id="response-message"></div>
+</body>
+</html>
