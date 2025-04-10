@@ -49,11 +49,13 @@ dropArea.addEventListener('drop', (e) => {
     dropArea.classList.remove('dragover');
     if (e.dataTransfer.files.length > 0) {
         showImage(e.dataTransfer.files[0]);
+        fileInput.files = e.dataTransfer.files;
     }
 });
 
 resetButton.addEventListener('click', () => {
     fileInput.value = '';
+    responseMessage.textContent = '';
     preview.innerHTML = '<p>No image loaded</p>';
 });
 

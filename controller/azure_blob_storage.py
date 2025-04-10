@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 import os
 from azure.storage.blob import ContainerClient
+import uuid
 
 load_dotenv(".env")
 
@@ -17,28 +18,13 @@ def container_exists(container_name):
         print(f"Error checking container existence: {e}")
         return False
 
-def upload_file_to_container(container_name, folder_path):
+def upload_file_to_container(container_name, file_stream, filename):
     try:
         container_client = ContainerClient.from_connection_string(conn_str=os.getenv("CONNECTION_STRING"), container_name=container_name)
-        for filename in os.listdir(folder_path):
-            file_path = os.path.join(folder_path, filename)
-
-            if os.path.isfile(file_path):
-                blob_client = container_client.get_blob_client(blob=filename)
-                with open(file_path, "rb") as data:
-                    blob_client.upload_blob(data, overwrite=True)
-                print(f"File '{filename}' uploaded to container '{container_name}'.")
+        default_name = f"{uuid.uuid4().hex}_{os.path.basename(filename)}"
+        blob_client = container_client.get_blob_client(default_name)
+        blob_client.upload_blob(file_stream, overwrite=True)
+        print(f"File '{filename}' uploaded to container '{container_name}'.")
                 
     except Exception as e:
         print(f"Error uploading file to container: {e}")
-        
-def download_file_from_container(container_name, blob_name, download_path):
-    try:
-        container_client = ContainerClient.from_connection_string(conn_str=os.getenv("CONNECTION_STRING"), container_name=container_name)
-        blob_client = container_client.get_blob_client(blob=blob_name)
-
-        with open(download_path, "wb") as download_file:
-            download_file.write(blob_client.download_blob().readall())
-        print(f"Blob '{blob_name}' downloaded to '{download_path}'.")
-    except Exception as e:
-        print(f"Error downloading file from container: {e}")
