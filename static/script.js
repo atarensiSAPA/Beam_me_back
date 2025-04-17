@@ -76,7 +76,7 @@ form.addEventListener('submit', async (e) => {
         method: 'POST',
         body: formData,
       });
-  
+
       const text = await res.text();
       responseMessage.textContent = text;
     } catch (err) {
