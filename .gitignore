@@ -1,2 +1,6 @@
 .env
 .venv
+facial_emotions_image_detection
+facial_emotion_dataset
+images
+blobTriggerApp
