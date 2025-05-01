@@ -41,4 +41,4 @@ def process_image(unkown_path, output_path, known_face_encodings, known_face_nam
             os.makedirs(output_path)
         final_output_path = os.path.join(output_path, f"{name}_detected.jpg")
         pil_image.save(final_output_path)
-        print(f"Cara guardada: {output_path}")
+        print(f"Cara guardada: {final_output_path}")
