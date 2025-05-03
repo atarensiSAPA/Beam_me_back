@@ -18,27 +18,28 @@ def load_known_faces(known_path):
     return known_encodings, known_names
 
 def process_image(unkown_path, output_path, known_face_encodings, known_face_names):
-
-    # Load unknown image
     target_image = face_recognition.load_image_file(unkown_path)
     face_locations = face_recognition.face_locations(target_image)
     face_encodings = face_recognition.face_encodings(target_image, face_locations)
 
-    # Check if any faces were found
+    if not face_locations:
+        return False  # No faces found
+
     for i, (top, right, bottom, left) in enumerate(face_locations):
         face_encoding = face_encodings[i]
         matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
-        name = "Desconocido"
+        name = "Unknown"
 
         if True in matches:
             first_match_index = matches.index(True)
             name = known_face_names[first_match_index]
 
-        # Draw a box around the face
         face_image = target_image[top:bottom, left:right]
         pil_image = Image.fromarray(face_image)
         if not os.path.exists(output_path):
             os.makedirs(output_path)
         final_output_path = os.path.join(output_path, f"{name}_detected.jpg")
         pil_image.save(final_output_path)
-        print(f"Cara guardada: {final_output_path}")
+        print(f"Saved face: {final_output_path}")
+
+    return True

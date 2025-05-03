@@ -4,6 +4,8 @@ const preview = document.getElementById('preview');
 const resetButton = document.getElementById('reset-btn');
 const form = document.getElementById('upload-form');
 const responseMessage = document.getElementById('response-message');
+const output = document.getElementById('output');
+
 if (!dropArea) {
   console.error('Drop area not found');
 }
@@ -56,31 +58,42 @@ dropArea.addEventListener('drop', (e) => {
 resetButton.addEventListener('click', () => {
     fileInput.value = '';
     responseMessage.textContent = '';
+    output.textContent = '';
     preview.innerHTML = '<p>No image loaded</p>';
 });
 
 // Interceptar el envío del formulario
 form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-  
-    if (fileInput.files.length === 0) {
+  e.preventDefault();
+
+  if (fileInput.files.length === 0) {
       responseMessage.textContent = 'No image selected';
       return;
-    }
-  
-    const formData = new FormData();
-    formData.append('image', fileInput.files[0]);
-  
-    try {
+  }
+
+  const formData = new FormData();
+  formData.append('image', fileInput.files[0]);
+
+  try {
+      responseMessage.textContent = 'Processing image...';
       const res = await fetch('/process', {
-        method: 'POST',
-        body: formData,
+          method: 'POST',
+          body: formData,
       });
 
-      const text = await res.text();
-      responseMessage.textContent = text;
-    } catch (err) {
+      const data = await res.json();
+
+      if (res.ok) {
+          console.log(data);
+          output.textContent = data.join("\n");
+          responseMessage.textContent = 'Image processed successfully!';
+      } else {
+          responseMessage.textContent = data.error || 'Unknown error';
+          output.textContent = '';
+      }
+
+  } catch (err) {
       responseMessage.textContent = 'Error sending image';
       console.error(err);
-    }
-  });
+  }
+});

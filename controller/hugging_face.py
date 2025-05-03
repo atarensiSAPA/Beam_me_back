@@ -430,6 +430,8 @@ def train_model():
     processor.save_pretrained("facial_emotions_image_detection")
 
 def classify_image(image_path):
+    array_emotions = []
+    
     # Cargar modelo y preprocesador desde carpeta local
     model = ViTForImageClassification.from_pretrained("facial_emotions_image_detection", local_files_only=True)
     processor = ViTImageProcessor.from_pretrained("facial_emotions_image_detection", local_files_only=True)
@@ -442,9 +444,16 @@ def classify_image(image_path):
         if filename.endswith('.jpg') or filename.endswith('.png') or filename.endswith('.jpeg'):
             image = Image.open(os.path.join(image_path, filename)).convert("RGB")
             results = pipe(image)
+            filename_splited = filename.split('_')[0]
 
             # Mostrar resultados
-            print(f"Results for {filename}:")
+            print(f"Results for {filename_splited}:")
             for result in results:
                 print(f"Emotion: {result['label']}, %: {result['score']:.4f}")
+                
+                # Find the emotion with the highest score
+                highest_emotion = max(results, key=lambda x: x['score'])
+            array_emotions.append(f"{filename_splited}: {highest_emotion['label']}\n")
+            print(f"Highest Emotion: {highest_emotion['label']}, Score: {highest_emotion['score']:.4f}")
             print()
+    return array_emotions
