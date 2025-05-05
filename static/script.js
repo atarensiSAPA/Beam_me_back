@@ -5,6 +5,8 @@ const resetButton = document.getElementById('reset-btn');
 const form = document.getElementById('upload-form');
 const responseMessage = document.getElementById('response-message');
 const output = document.getElementById('output');
+const selectedLengauge = document.querySelector('input[name="lenguage"]:checked');
+const jokesMessage = document.getElementById('jokes-message');
 
 if (!dropArea) {
   console.error('Drop area not found');
@@ -23,6 +25,9 @@ if (!form) {
 }
 if (!responseMessage) {
     console.error('Response message area not found');
+}
+if (!selectedLengauge) {
+    console.error('Selected language not found');
 }
 
 function showImage(file) {
@@ -59,13 +64,13 @@ resetButton.addEventListener('click', () => {
     fileInput.value = '';
     responseMessage.textContent = '';
     output.textContent = '';
+    jokesMessage.textContent = '';
     preview.innerHTML = '<p>No image loaded</p>';
 });
 
 // Interceptar el envío del formulario
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
-
   if (fileInput.files.length === 0) {
       responseMessage.textContent = 'No image selected';
       return;
@@ -73,7 +78,6 @@ form.addEventListener('submit', async (e) => {
 
   const formData = new FormData();
   formData.append('image', fileInput.files[0]);
-
   try {
       responseMessage.textContent = 'Processing image...';
       const res = await fetch('/process', {
@@ -87,6 +91,20 @@ form.addEventListener('submit', async (e) => {
           console.log(data);
           output.textContent = data.join("\n");
           responseMessage.textContent = 'Image processed successfully!';
+          if (data.some(emotion => emotion.includes("disgust") || emotion.includes("sad"))) {
+            const res = await fetch('/process_jokes', {
+                method: 'POST',
+                body: selectedLengauge.value,
+            });
+            const jokes = await res.json();
+            if (res.ok) {
+                console.log(jokes);
+                jokesMessage.textContent = jokes.join("\n");
+            } else {
+                jokesMessage.textContent = 'Error fetching jokes';
+            }
+          }
+
       } else {
           responseMessage.textContent = data.error || 'Unknown error';
           output.textContent = '';

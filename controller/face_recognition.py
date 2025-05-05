@@ -33,6 +33,8 @@ def process_image(unkown_path, output_path, known_face_encodings, known_face_nam
         if True in matches:
             first_match_index = matches.index(True)
             name = known_face_names[first_match_index]
+        else:
+            name = f"Unknown_{i + 1}"  # Add a unique number for each unknown face
 
         face_image = target_image[top:bottom, left:right]
         pil_image = Image.fromarray(face_image)
