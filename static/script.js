@@ -1,11 +1,11 @@
 const dropArea = document.getElementById('drop-area');
 const fileInput = document.getElementById('fileElem');
 const preview = document.getElementById('preview');
+const submitButton = document.getElementById('submit-btn');
 const resetButton = document.getElementById('reset-btn');
 const form = document.getElementById('upload-form');
 const responseMessage = document.getElementById('response-message');
 const output = document.getElementById('output');
-const selectedLengauge = document.querySelector('input[name="lenguage"]:checked');
 const jokesMessage = document.getElementById('jokes-message');
 
 if (!dropArea) {
@@ -25,9 +25,6 @@ if (!form) {
 }
 if (!responseMessage) {
     console.error('Response message area not found');
-}
-if (!selectedLengauge) {
-    console.error('Selected language not found');
 }
 
 function showImage(file) {
@@ -80,6 +77,8 @@ form.addEventListener('submit', async (e) => {
   formData.append('image', fileInput.files[0]);
   try {
       responseMessage.textContent = 'Processing image...';
+      submitButton.disabled = true;
+      resetButton.disabled = true;
       const res = await fetch('/process', {
           method: 'POST',
           body: formData,
@@ -89,29 +88,46 @@ form.addEventListener('submit', async (e) => {
 
       if (res.ok) {
           console.log(data);
-          output.textContent = data.join("\n");
+          output.innerHTML = data.join("");
+          jokesMessage.textContent = '';
           responseMessage.textContent = 'Image processed successfully!';
-          if (data.some(emotion => emotion.includes("disgust") || emotion.includes("sad"))) {
-            const res = await fetch('/process_jokes', {
-                method: 'POST',
-                body: selectedLengauge.value,
-            });
-            const jokes = await res.json();
-            if (res.ok) {
-                console.log(jokes);
-                jokesMessage.textContent = jokes.join("\n");
-            } else {
-                jokesMessage.textContent = 'Error fetching jokes';
-            }
+          submitButton.disabled = false;
+          resetButton.disabled = false;
+          try{
+            if (data.some(emotion => emotion.includes("disgust") || emotion.includes("sad"))) {
+                const selectedLengauge = document.querySelector('input[name="lenguage"]:checked');
+
+                const joke_res = await fetch('/process_jokes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain',
+                    },
+                    body: selectedLengauge.value,
+                });
+                const jokes = await joke_res.json();
+                if (joke_res.ok) {
+                    console.log(jokes);
+                    jokesMessage.textContent = jokes.joke.join("\n");
+                } else {
+                    jokesMessage.textContent = jokes.error || 'Error fetching jokes';
+                }
+              }
+          } catch (err) {
+            console.error('Error fetching jokes:', err);
+            jokesMessage.textContent = 'Error fetching jokes';
           }
 
       } else {
           responseMessage.textContent = data.error || 'Unknown error';
           output.textContent = '';
+          submitButton.disabled = false;
+          resetButton.disabled = false;
       }
 
   } catch (err) {
       responseMessage.textContent = 'Error sending image';
       console.error(err);
+      submitButton.disabled = false;
+      resetButton.disabled = false;
   }
 });

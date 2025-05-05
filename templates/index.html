@@ -19,18 +19,18 @@
             <p>No image loaded</p>
         </div>
         <div>
-            <button type="submit" class="btn" id="process-btn">Process</button>
+            <button type="submit" class="btn" id="submit-btn">Process</button>
             <button type="reset" class="btn" id="reset-btn">Reset</button>
         </div>
         <br>
-        <textarea id="output" rows="10" cols="50" readonly disabled></textarea>
+        <div id="output" style="white-space: pre-wrap;"></div>
         <br>
         <label for="lenguage">Select your lenguage for the jokes:</label><br>
         <input type="radio" name="lenguage" value="es" checked>Spanish
         <input type="radio" name="lenguage" value="en">English
     </form>
-    
-    <div id="response-message"></div>
+    <br>
+    <div id="response-message" style="color: red;"></div>
     <br>
     <div id="jokes-message"></div>
 </body>

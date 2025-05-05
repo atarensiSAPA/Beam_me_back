@@ -13,14 +13,11 @@ def get_jokes(lenguage):
             if joke_data['type'] == 'single':
                 joke = joke_data['joke']
                 jokes_array.append(joke)
-                print(f"Joke: {joke}")
                 
             elif joke_data['type'] == 'twopart':
                 setup = joke_data['setup']
                 delivery = joke_data['delivery']
                 jokes_array.append(setup + " " + delivery)
-                print(f"Setup: {setup}")
-                print(f"Delivery: {delivery}")
                 
             return jokes_array
         else:

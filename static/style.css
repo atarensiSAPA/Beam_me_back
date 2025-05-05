@@ -1,11 +1,15 @@
 body {
+  max-width: 900px;
+  margin: auto;
   font-family: sans-serif;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 2rem;
   background-color: #f9f9f9;
+
 }
+
 
 .upload-area {
   border: 2px dashed #ccc;
@@ -50,4 +54,38 @@ input[type="file"] {
   border-radius: 5px;
   cursor: pointer;
   margin-top: 1rem;
+}
+
+button[disabled=disabled], button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+#output div {
+  background-color: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  width: 100px;
+}
+
+#output {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 160px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
