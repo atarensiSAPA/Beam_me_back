@@ -77,15 +77,30 @@ button[disabled=disabled], button:disabled {
   margin-top: 2rem;
 }
 
+form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#output-wrapper {
+  margin-top: 2rem;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+}
+
 .card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  width: 160px;
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 10px;
   background-color: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 160px;
 }

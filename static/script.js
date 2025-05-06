@@ -93,6 +93,23 @@ form.addEventListener('submit', async (e) => {
           responseMessage.textContent = 'Image processed successfully!';
           submitButton.disabled = false;
           resetButton.disabled = false;
+
+          const emotions = ['happy', 'surpirse', 'neutral', 'disgust', 'sad', 'fear',  'angry'];
+
+          document.querySelectorAll('.card').forEach(card => {
+              const dropdown = document.createElement('select');
+              emotions.forEach(emotion => {
+                  const option = document.createElement('option');
+                  option.value = emotion;
+                  option.textContent = emotion;
+                  if (card.dataset.emotion === emotion) {
+                      option.selected = true;
+                  }
+                  dropdown.appendChild(option);
+              });
+              card.appendChild(dropdown);
+          });
+
           try{
             if (data.some(emotion => emotion.includes("disgust") || emotion.includes("sad"))) {
                 const selectedLengauge = document.querySelector('input[name="lenguage"]:checked');

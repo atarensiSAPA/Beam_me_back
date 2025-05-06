@@ -454,7 +454,12 @@ def classify_image(image_path):
                 # Find the emotion with the highest score
                 highest_emotion = max(results, key=lambda x: x['score'])
             img_url = f"/face_images/{filename}"
-            array_emotions.append(f"<img src='{img_url}' width='80'> {filename_splited}: {highest_emotion['label']}<br>")
+            array_emotions.append(f"""
+            <div class='card' data-name='{filename_splited}' data-emotion='{highest_emotion['label']}'>
+                <img src='{img_url}' width='100'><br>
+                <div class='label'>{filename_splited}: {highest_emotion['label']}</div>
+            </div>
+            """)
             print(f"Highest Emotion: {highest_emotion['label']}, Score: {highest_emotion['score']:.4f}")
             print()
     return array_emotions
