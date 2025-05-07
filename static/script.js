@@ -63,6 +63,8 @@ resetButton.addEventListener('click', () => {
     output.textContent = '';
     jokesMessage.textContent = '';
     preview.innerHTML = '<p>No image loaded</p>';
+    const btn = document.getElementById('submit-changes');
+    if (btn) btn.remove();
 });
 
 // Interceptar el envío del formulario
@@ -94,7 +96,7 @@ form.addEventListener('submit', async (e) => {
           submitButton.disabled = false;
           resetButton.disabled = false;
 
-          const emotions = ['happy', 'surpirse', 'neutral', 'disgust', 'sad', 'fear',  'angry'];
+          const emotions = ['happy', 'surprise', 'neutral', 'disgust', 'sad', 'fear',  'angry'];
 
           document.querySelectorAll('.card').forEach(card => {
               const dropdown = document.createElement('select');
@@ -109,6 +111,8 @@ form.addEventListener('submit', async (e) => {
               });
               card.appendChild(dropdown);
           });
+          post_emotions();
+
 
           try{
             if (data.some(emotion => emotion.includes("disgust") || emotion.includes("sad"))) {
@@ -148,3 +152,57 @@ form.addEventListener('submit', async (e) => {
       resetButton.disabled = false;
   }
 });
+
+post_emotions = async () => {
+    if (!document.getElementById('submit-changes')) {
+        const submitChangesBtn = document.createElement('button');
+        submitChangesBtn.id = 'submit-changes';
+        submitChangesBtn.textContent = 'Submit Emotion Changes';
+        submitChangesBtn.classList.add('btn');
+        submitChangesBtn.style.marginTop = '1rem';
+    
+        document.getElementById('output-wrapper').appendChild(submitChangesBtn);
+    
+        // Asignar comportamiento
+        submitChangesBtn.addEventListener('click', async () => {
+            const changes = [];
+    
+            document.querySelectorAll('.card').forEach(card => {
+                const name = card.dataset.name;
+                const originalEmotion = card.dataset.emotion;
+                const selectedEmotion = card.querySelector('select').value;
+                const image = card.querySelector('img').src;
+    
+                if (originalEmotion !== selectedEmotion) {
+                    changes.push({ name, new_emotion: selectedEmotion, image_path: image });
+                }
+            });
+    
+            if (changes.length === 0) {
+                alert("No changes detected.");
+                return;
+            }
+    
+            try {
+                const res = await fetch('/update_emotions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(changes),
+                });
+    
+                const result = await res.json();
+    
+                if (res.ok) {
+                    alert("Emotions updated successfully.");
+                } else {
+                    alert(result.error || "Failed to update emotions.");
+                }
+            } catch (err) {
+                console.error("Error submitting changes:", err);
+                alert("An error occurred while submitting changes.");
+            }
+        });
+    }
+}

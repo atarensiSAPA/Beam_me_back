@@ -7,6 +7,7 @@ import controller.hugging_face as hugging_face_model
 import controller.api_jokes as api_jokes
 import os
 import shutil
+import controller.changed_emotions as changed_emotions
 
 def delete_folders(folder_path):
     if os.path.exists(folder_path):
@@ -100,6 +101,18 @@ def jokes():
         return jsonify({"joke": jokes_array}), 200
     else:
         return jsonify({"error": "Failed to fetch joke"}), 500
+    
+@app.route('/update_emotions', methods=['POST'])
+def update_emotions():
+    new_emotions = request.get_json()
+    print(new_emotions)
+    
+    flag_new_emotions = changed_emotions.redirect_emotions(new_emotions)
+    
+    if not flag_new_emotions:
+        return jsonify({"error": "Failed to update emotions"}), 500
+    
+    return jsonify({"status": "ok"}), 200
     
 if __name__ == '__main__':
     app.run(debug=True)
