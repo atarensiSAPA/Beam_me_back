@@ -7,6 +7,8 @@ const form = document.getElementById('upload-form');
 const responseMessage = document.getElementById('response-message');
 const output = document.getElementById('output');
 const jokesMessage = document.getElementById('jokes-message');
+const positive_percentage = document.getElementById('positive-percentage');
+const negative_percentage = document.getElementById('negative-percentage');
 
 if (!dropArea) {
   console.error('Drop area not found');
@@ -65,6 +67,8 @@ resetButton.addEventListener('click', () => {
     preview.innerHTML = '<p>No image loaded</p>';
     const btn = document.getElementById('submit-changes');
     if (btn) btn.remove();
+    positive_percentage.textContent = '';
+    negative_percentage.textContent = '';
 });
 
 // Interceptar el envío del formulario
@@ -97,6 +101,7 @@ form.addEventListener('submit', async (e) => {
           resetButton.disabled = false;
 
           const emotions = ['happy', 'surprise', 'neutral', 'disgust', 'sad', 'fear',  'angry'];
+          const puntuation_emotions = [5, 3, 1, -1, -2, -3, -5]
 
           document.querySelectorAll('.card').forEach(card => {
               const dropdown = document.createElement('select');
@@ -111,6 +116,7 @@ form.addEventListener('submit', async (e) => {
               });
               card.appendChild(dropdown);
           });
+          show_percentages(emotions, puntuation_emotions);
           post_emotions();
 
 
@@ -152,6 +158,37 @@ form.addEventListener('submit', async (e) => {
       resetButton.disabled = false;
   }
 });
+
+show_percentages = (emotions, puntuation_emotions) => {
+    // show the percentatge of all the emotions with the array of puntuation_emotions
+    let totalPositive = 0;
+    let totalNegative = 0;
+
+    document.querySelectorAll('.card').forEach(card => {
+        const emotion = card.dataset.emotion;
+        const index = emotions.indexOf(emotion);
+        const score = puntuation_emotions[index];
+
+        if (score > 0) {
+            totalPositive += score;
+        } else if (score < 0) {
+            totalNegative += Math.abs(score);
+        }
+    });
+
+    // Calcular porcentaje total
+    const total = totalPositive + totalNegative;
+    let positivePct = 0;
+    let negativePct = 0;
+
+    if (total > 0) {
+        positivePct = Math.round((totalPositive / total) * 100);
+        negativePct = 100 - positivePct;
+    }
+
+    positive_percentage.textContent = `Positive: ${positivePct}%`;
+    negative_percentage.textContent = `Negative: ${negativePct}%`;
+}
 
 post_emotions = async () => {
     if (!document.getElementById('submit-changes')) {

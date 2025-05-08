@@ -93,6 +93,13 @@ form {
   gap: 20px;
 }
 
+#percentatges-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 2rem;
+}
+
 .card {
   display: flex;
   flex-direction: column;
