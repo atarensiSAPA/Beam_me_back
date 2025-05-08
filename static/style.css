@@ -1,3 +1,6 @@
+@import "compass/css3";
+
+@import url(https://fonts.googleapis.com/css?family=Finger+Paint);
 body {
   max-width: 900px;
   margin: auto;
@@ -7,9 +10,78 @@ body {
   align-items: center;
   padding: 2rem;
   background-color: #f9f9f9;
-
 }
 
+.logo{
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: 2rem;
+  border-radius: 50px;
+}
+
+.logo_sapa{
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: 2rem;
+  border-radius: 50px;
+  margin-top: 3rem;
+}
+
+.title-container {
+  min-height: 10vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 5vw;
+  font-family: "Finger Paint", cursive;
+  text-align: center;
+  color: transparent;
+  overflow: visible;
+  backface-visibility: hidden;
+  flex-wrap: wrap;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+span {
+  display: inline-block;
+  text-shadow: 0 0 0 black;
+  animation: smoky 5s 3s both;
+}
+
+span:nth-child(even) {
+  animation-name: smoky-mirror;
+}
+
+@keyframes smoky {
+  60% {
+    text-shadow: 0 0 40px black;
+  }
+  to {
+    transform:
+      translate3d(15rem, -8rem, 0)
+      rotate(-40deg)
+      skewX(70deg)
+      scale(1.5);
+    text-shadow: 0 0 20px black;
+    opacity: 0;
+  }
+}
+
+@keyframes smoky-mirror {
+  60% {
+    text-shadow: 0 0 40px black;
+  }
+  to {
+    transform:
+      translate3d(18rem, -8rem, 0)
+      rotate(-40deg)
+      skewX(-70deg)
+      scale(2);
+    text-shadow: 0 0 20px black;
+    opacity: 0;
+  }
+}
 
 .upload-area {
   border: 2px dashed #ccc;

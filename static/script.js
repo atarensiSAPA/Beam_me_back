@@ -10,6 +10,13 @@ const jokesMessage = document.getElementById('jokes-message');
 const positive_percentage = document.getElementById('positive-percentage');
 const negative_percentage = document.getElementById('negative-percentage');
 
+setTimeout(() => {
+    const titleContainer = document.querySelector('.title-container');
+    if (titleContainer) {
+        titleContainer.style.display = 'none';
+    }
+}, 7000);
+
 if (!dropArea) {
   console.error('Drop area not found');
 }
@@ -160,7 +167,7 @@ form.addEventListener('submit', async (e) => {
 });
 
 show_percentages = (emotions, puntuation_emotions) => {
-    // show the percentatge of all the emotions with the array of puntuation_emotions
+    // show the percentage of all the emotions with the array of puntuation_emotions
     let totalPositive = 0;
     let totalNegative = 0;
 

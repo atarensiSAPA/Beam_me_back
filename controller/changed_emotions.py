@@ -32,6 +32,3 @@ def redirect_emotions(new_emotions_list):
             return False
 
     return True
-
-def auto_train_model(model_name, model_path, connection_string):
-    return False

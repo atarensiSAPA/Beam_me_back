@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CIT</title>
+    <title>Bring me back</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="{{ url_for('static', filename='script.js') }}" defer></script>
 </head>
 <body>
+    <div class="title-container"><span>B</span><span>e</span><span>a</span><span>m</span><span>&nbsp;</span><span>m</span><span>e</span><span>&nbsp;</span><span>b</span><span>a</span><span>c</span><span>k</span></div>
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo"></h1>
     <form id="upload-form" enctype="multipart/form-data">
         <div class="upload-area" id="drop-area">
             <p>Drag an image or press the button</p>
@@ -38,5 +40,6 @@
     </div>
     <br>
     <div id="jokes-message"></div>
+    <img src="{{ url_for('static', filename='logo_sapa.png') }}" alt="logo_sapa" class="logo_sapa">
 </body>
 </html>
