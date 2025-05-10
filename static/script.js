@@ -9,6 +9,9 @@ const output = document.getElementById('output');
 const jokesMessage = document.getElementById('jokes-message');
 const positive_percentage = document.getElementById('positive-percentage');
 const negative_percentage = document.getElementById('negative-percentage');
+const video = document.getElementById('video');
+const cameraSelect = document.getElementById('camera-select');
+const detectCamerasBtn = document.getElementById('detect-cameras-btn');
 
 setTimeout(() => {
     const titleContainer = document.querySelector('.title-container');
@@ -35,6 +38,69 @@ if (!form) {
 if (!responseMessage) {
     console.error('Response message area not found');
 }
+
+async function getCameras() {
+    try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        const currentDeviceId = cameraSelect.value;
+        cameraSelect.innerHTML = '';
+
+        videoDevices.forEach((device, index) => {
+            const option = document.createElement('option');
+            option.value = device.deviceId;
+            option.text = device.label || `Camera ${index + 1}`;
+            cameraSelect.appendChild(option);
+        });
+
+        // Si la cámara actual sigue disponible, no la reinicies
+        const stillAvailable = videoDevices.some(d => d.deviceId === currentDeviceId);
+        if (stillAvailable) {
+            cameraSelect.value = currentDeviceId;
+        } else if (videoDevices.length > 0) {
+            startCamera(videoDevices[0].deviceId);
+        }
+    } catch (err) {
+        console.error("Error listing cameras:", err);
+        alert("Failed to list cameras. Make sure your device allows camera access.");
+    }
+}
+
+
+let stream = null;
+async function startCamera(deviceId = null) {
+  if (stream) {
+    stream.getTracks().forEach(track => track.stop());
+  }
+
+  const constraints = {
+    video: deviceId ? { deviceId: { exact: deviceId } } : true,
+    audio: false
+  };
+
+  try {
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = stream;
+  } catch (err) {
+    console.error("Error accessing camera:", err.name);
+
+    if (err.name === "NotReadableError") {
+        alert("The camera is being used by another application. Please close it and try again.");
+    } else if(err.name === "OverconstrainedError") {
+      alert("The selected camera is not available or not supported. Please select another one.");
+    } else if (err.name === "NotAllowedError") {
+      alert("Access to the camera was denied.");
+    } else if (err.name === "NotFoundError") {
+      alert("No camera was found available.");
+    } else {
+      alert("Error accessing the camera: " + err.message);
+    }
+  }
+}
+
+cameraSelect.addEventListener('change', () => {
+    startCamera(cameraSelect.value);
+});
 
 function showImage(file) {
   const reader = new FileReader();
@@ -250,3 +316,7 @@ post_emotions = async () => {
         });
     }
 }
+
+detectCamerasBtn.addEventListener('click', () => {
+    getCameras();
+});

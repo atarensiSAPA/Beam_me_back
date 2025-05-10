@@ -11,17 +11,33 @@
     <div class="title-container"><span>B</span><span>e</span><span>a</span><span>m</span><span>&nbsp;</span><span>m</span><span>e</span><span>&nbsp;</span><span>b</span><span>a</span><span>c</span><span>k</span></div>
     <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo"></h1>
     <form id="upload-form" enctype="multipart/form-data">
-        <div class="upload-area" id="drop-area">
-            <p>Drag an image or press the button</p>
-            <label class="btn" for="fileElem">Load image</label>
-            <input type="file" id="fileElem" name="image" accept="image/*">
+        <div class="image-camera-container">
+            <!-- Arrastrar y soltar y vista previa de imagen -->
+            <div class="preview-container">
+                <div class="upload-area" id="drop-area">
+                    <p>Drag an image or press the button</p>
+                    <label class="btn" for="fileElem">Load image</label>
+                    <input type="file" id="fileElem" name="image" accept="image/*">
+                </div>
+                <div class="preview" id="preview">
+                    <p>No image loaded</p>
+                </div>
+            </div>
+
+            <!-- Cámara -->
+            <div class="camera-container">
+                <button type="button" id="detect-cameras-btn" class="btn">Detect Cameras</button>
+                <br>
+                <select id="camera-select"></select>
+                <div class="camera-preview" id="camera-preview">
+                    <video id="video" autoplay playsinline></video>
+                </div>
+            </div>
         </div>
-        
-        <div class="preview" id="preview">
-            <p>No image loaded</p>
-        </div>
+
         <div>
-            <button type="submit" class="btn" id="submit-btn">Process</button>
+            <button type="submit" class="btn" id="submit-btn">Process Image</button>
+            <button type="button" class="btn" id="capture-btn">Capture with camera</button>
             <button type="reset" class="btn" id="reset-btn">Reset</button>
         </div>
         <br>
