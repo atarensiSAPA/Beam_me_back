@@ -12,6 +12,8 @@ const negative_percentage = document.getElementById('negative-percentage');
 const video = document.getElementById('video');
 const cameraSelect = document.getElementById('camera-select');
 const detectCamerasBtn = document.getElementById('detect-cameras-btn');
+const submitRecordBtn = document.getElementById('capture-btn');
+submitRecordBtn.disabled = true;
 
 setTimeout(() => {
     const titleContainer = document.querySelector('.title-container');
@@ -38,11 +40,11 @@ if (!form) {
 if (!responseMessage) {
     console.error('Response message area not found');
 }
-
+let videoDevices = [];
 async function getCameras() {
     try {
         const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        videoDevices = devices.filter(device => device.kind === 'videoinput');
         const currentDeviceId = cameraSelect.value;
         cameraSelect.innerHTML = '';
 
@@ -52,6 +54,12 @@ async function getCameras() {
             option.text = device.label || `Camera ${index + 1}`;
             cameraSelect.appendChild(option);
         });
+
+        if (videoDevices.length > 0) {
+            submitRecordBtn.disabled = false;
+        } else {
+            submitRecordBtn.disabled = true;
+        }
 
         // Si la cámara actual sigue disponible, no la reinicies
         const stillAvailable = videoDevices.some(d => d.deviceId === currentDeviceId);
@@ -81,6 +89,7 @@ async function startCamera(deviceId = null) {
   try {
     stream = await navigator.mediaDevices.getUserMedia(constraints);
     video.srcObject = stream;
+    submitRecordBtn.disabled = false;
   } catch (err) {
     console.error("Error accessing camera:", err.name);
 
@@ -133,6 +142,10 @@ dropArea.addEventListener('drop', (e) => {
 });
 
 resetButton.addEventListener('click', () => {
+    reset_function();
+});
+
+function reset_function() {
     fileInput.value = '';
     responseMessage.textContent = '';
     output.textContent = '';
@@ -142,7 +155,15 @@ resetButton.addEventListener('click', () => {
     if (btn) btn.remove();
     positive_percentage.textContent = '';
     negative_percentage.textContent = '';
-});
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+        video.srcObject = null;
+        videoDevices = [];
+        cameraSelect.innerHTML = '';
+        submitRecordBtn.disabled = true;
+    }
+}
 
 // Interceptar el envío del formulario
 form.addEventListener('submit', async (e) => {
@@ -155,80 +176,38 @@ form.addEventListener('submit', async (e) => {
   const formData = new FormData();
   formData.append('image', fileInput.files[0]);
   try {
-      responseMessage.textContent = 'Processing image...';
-      submitButton.disabled = true;
-      resetButton.disabled = true;
-      const res = await fetch('/process', {
-          method: 'POST',
-          body: formData,
-      });
+    responseMessage.textContent = 'Processing image...';
+    // if want to reset the output when the user submit a new image
+    // jokesMessage.textContent = '';
+    // output.textContent = '';
+    // positive_percentage.textContent = '';
+    // negative_percentage.textContent = '';
+    disableButtons();
+    const res = await fetch('/process', {
+    method: 'POST',
+    body: formData,
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (res.ok) {
-          console.log(data);
-          output.innerHTML = data.join("");
-          jokesMessage.textContent = '';
-          responseMessage.textContent = 'Image processed successfully!';
-          submitButton.disabled = false;
-          resetButton.disabled = false;
+    if (res.ok) {
+        console.log(data);
+        output.innerHTML = data.join("");
+        response_function(data);
 
-          const emotions = ['happy', 'surprise', 'neutral', 'disgust', 'sad', 'fear',  'angry'];
-          const puntuation_emotions = [5, 3, 1, -1, -2, -3, -5]
-
-          document.querySelectorAll('.card').forEach(card => {
-              const dropdown = document.createElement('select');
-              emotions.forEach(emotion => {
-                  const option = document.createElement('option');
-                  option.value = emotion;
-                  option.textContent = emotion;
-                  if (card.dataset.emotion === emotion) {
-                      option.selected = true;
-                  }
-                  dropdown.appendChild(option);
-              });
-              card.appendChild(dropdown);
-          });
-          show_percentages(emotions, puntuation_emotions);
-          post_emotions();
-
-
-          try{
-            if (data.some(emotion => emotion.includes("disgust") || emotion.includes("sad"))) {
-                const selectedLengauge = document.querySelector('input[name="lenguage"]:checked');
-
-                const joke_res = await fetch('/process_jokes', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'text/plain',
-                    },
-                    body: selectedLengauge.value,
-                });
-                const jokes = await joke_res.json();
-                if (joke_res.ok) {
-                    console.log(jokes);
-                    jokesMessage.textContent = jokes.joke.join("\n");
-                } else {
-                    jokesMessage.textContent = jokes.error || 'Error fetching jokes';
-                }
-              }
-          } catch (err) {
-            console.error('Error fetching jokes:', err);
-            jokesMessage.textContent = 'Error fetching jokes';
-          }
-
-      } else {
-          responseMessage.textContent = data.error || 'Unknown error';
-          output.textContent = '';
-          submitButton.disabled = false;
-          resetButton.disabled = false;
-      }
+    } else {
+        responseMessage.textContent = data.error || 'Unknown error';
+        output.textContent = '';
+        jokesMessage.textContent = '';
+        positive_percentage.textContent = '';
+        negative_percentage.textContent = '';
+        enableButtons();
+    }
 
   } catch (err) {
       responseMessage.textContent = 'Error sending image';
       console.error(err);
-      submitButton.disabled = false;
-      resetButton.disabled = false;
+      enableButtons();
   }
 });
 
@@ -320,3 +299,108 @@ post_emotions = async () => {
 detectCamerasBtn.addEventListener('click', () => {
     getCameras();
 });
+
+submitRecordBtn.addEventListener('click', async () => {
+    if (stream) {
+        const track = stream.getVideoTracks()[0];
+        const imageCapture = new ImageCapture(track);
+        try {
+            responseMessage.textContent = 'Processing image camera...';
+            const blob = await imageCapture.takePhoto();
+            const file = new File([blob], 'captured_image.jpg', { type: 'image/jpeg' });
+            fileInput.files = new DataTransfer().files;
+            fileInput.files[0] = file;
+
+            const record_res = await fetch('/process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain',
+                },
+                body: fileInput.files[0],
+            });
+            const record_data = await record_res.json();
+            if (record_data.ok) {
+                console.log(record_data);
+                output.innerHTML = data.join("");
+                response_function(record_data);
+
+            } else {
+                responseMessage.textContent = record_data.error || 'Unknown error';
+                output.textContent = '';
+                jokesMessage.textContent = '';
+                positive_percentage.textContent = '';
+                negative_percentage.textContent = '';
+                enableButtons();
+            }
+        } catch (err) {
+            console.error("Error capturing photo:", err);
+            console.error(err);
+            enableButtons();
+        }
+    } else {
+        alert("No camera stream available.");
+    }
+});
+
+const response_function = async (data) => {
+    jokesMessage.textContent = '';
+    responseMessage.textContent = 'Image processed successfully!';
+    enableButtons();
+
+    const emotions = ['happy', 'surprise', 'neutral', 'disgust', 'sad', 'fear',  'angry'];
+    const puntuation_emotions = [5, 3, 1, -1, -2, -3, -5]
+
+    document.querySelectorAll('.card').forEach(card => {
+        const dropdown = document.createElement('select');
+        emotions.forEach(emotion => {
+            const option = document.createElement('option');
+            option.value = emotion;
+            option.textContent = emotion;
+            if (card.dataset.emotion === emotion) {
+                option.selected = true;
+            }
+            dropdown.appendChild(option);
+        });
+        card.appendChild(dropdown);
+    });
+    show_percentages(emotions, puntuation_emotions);
+    post_emotions();
+
+    try{
+    if (data.some(emotion => emotion.includes("disgust") || emotion.includes("sad"))) {
+        const selectedLengauge = document.querySelector('input[name="lenguage"]:checked');
+
+        const joke_res = await fetch('/process_jokes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'text/plain',
+            },
+            body: selectedLengauge.value,
+        });
+        const jokes = await joke_res.json();
+        if (joke_res.ok) {
+            console.log(jokes);
+            jokesMessage.textContent = jokes.joke.join("\n");
+        } else {
+            jokesMessage.textContent = jokes.error || 'Error fetching jokes';
+        }
+        }
+    } catch (err) {
+    console.error('Error fetching jokes:', err);
+    jokesMessage.textContent = 'Error fetching jokes';
+    }
+}
+
+function disableButtons() {
+    submitButton.disabled = true;
+    resetButton.disabled = true;
+    submitRecordBtn.disabled = true;
+}
+
+function enableButtons() {
+    submitButton.disabled = false;
+    resetButton.disabled = false;
+    if (videoDevices.length > 0) {
+        submitRecordBtn.disabled = false;
+    }
+}
