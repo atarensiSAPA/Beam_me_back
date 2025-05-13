@@ -305,18 +305,18 @@ submitRecordBtn.addEventListener('click', async () => {
         const track = stream.getVideoTracks()[0];
         const imageCapture = new ImageCapture(track);
         try {
-            responseMessage.textContent = 'Processing image camera...';
+            responseMessage.textContent = 'Processing image from camera...';
             const blob = await imageCapture.takePhoto();
             const file = new File([blob], 'captured_image.jpg', { type: 'image/jpeg' });
-            fileInput.files = new DataTransfer().files;
-            fileInput.files[0] = file;
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            fileInput.files = dataTransfer.files;
+            const formData = new FormData();
+            formData.append('image', file);
 
             const record_res = await fetch('/process', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'text/plain',
-                },
-                body: fileInput.files[0],
+            method: 'POST',
+            body: formData,
             });
             const record_data = await record_res.json();
             if (record_data.ok) {
