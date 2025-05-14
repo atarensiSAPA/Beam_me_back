@@ -177,11 +177,7 @@ form.addEventListener('submit', async (e) => {
   formData.append('image', fileInput.files[0]);
   try {
     responseMessage.textContent = 'Processing image...';
-    // if want to reset the output when the user submit a new image
-    // jokesMessage.textContent = '';
-    // output.textContent = '';
-    // positive_percentage.textContent = '';
-    // negative_percentage.textContent = '';
+    reset_process();
     disableButtons();
     const res = await fetch('/process', {
     method: 'POST',
@@ -197,10 +193,6 @@ form.addEventListener('submit', async (e) => {
 
     } else {
         responseMessage.textContent = data.error || 'Unknown error';
-        output.textContent = '';
-        jokesMessage.textContent = '';
-        positive_percentage.textContent = '';
-        negative_percentage.textContent = '';
         enableButtons();
     }
 
@@ -209,6 +201,51 @@ form.addEventListener('submit', async (e) => {
       console.error(err);
       enableButtons();
   }
+});
+
+submitRecordBtn.addEventListener('click', async () => {
+    if (stream) {
+        const track = stream.getVideoTracks()[0];
+        const imageCapture = new ImageCapture(track);
+        try {
+            responseMessage.textContent = 'Processing image from camera...';
+            const blob = await imageCapture.takePhoto();
+            const file = new File([blob], 'captured_image.jpg', { type: 'image/jpeg' });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            fileInput.files = dataTransfer.files;
+            const formData = new FormData();
+            formData.append('image', file);
+            reset_process();
+
+            const record_res = await fetch('/process', {
+            method: 'POST',
+            body: formData,
+            });
+            const record_data = await record_res.json();
+            if (record_res.ok) {
+                console.log(record_data);
+                output.innerHTML = record_data.join("");
+                response_function(record_data);
+
+            } else {
+                responseMessage.textContent = record_data.error || 'Unknown error';
+                reset_process();
+                output.innerHTML = record_data.join("");
+                enableButtons();
+            }
+        } catch (err) {
+            console.error("Error capturing photo:", err);
+            console.error(err);
+            enableButtons();
+        }
+    } else {
+        alert("No camera stream available.");
+    }
+});
+
+detectCamerasBtn.addEventListener('click', () => {
+    getCameras();
 });
 
 show_percentages = (emotions, puntuation_emotions) => {
@@ -296,52 +333,6 @@ post_emotions = async () => {
     }
 }
 
-detectCamerasBtn.addEventListener('click', () => {
-    getCameras();
-});
-
-submitRecordBtn.addEventListener('click', async () => {
-    if (stream) {
-        const track = stream.getVideoTracks()[0];
-        const imageCapture = new ImageCapture(track);
-        try {
-            responseMessage.textContent = 'Processing image from camera...';
-            const blob = await imageCapture.takePhoto();
-            const file = new File([blob], 'captured_image.jpg', { type: 'image/jpeg' });
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            fileInput.files = dataTransfer.files;
-            const formData = new FormData();
-            formData.append('image', file);
-
-            const record_res = await fetch('/process', {
-            method: 'POST',
-            body: formData,
-            });
-            const record_data = await record_res.json();
-            if (record_data.ok) {
-                console.log(record_data);
-                output.innerHTML = data.join("");
-                response_function(record_data);
-
-            } else {
-                responseMessage.textContent = record_data.error || 'Unknown error';
-                output.textContent = '';
-                jokesMessage.textContent = '';
-                positive_percentage.textContent = '';
-                negative_percentage.textContent = '';
-                enableButtons();
-            }
-        } catch (err) {
-            console.error("Error capturing photo:", err);
-            console.error(err);
-            enableButtons();
-        }
-    } else {
-        alert("No camera stream available.");
-    }
-});
-
 const response_function = async (data) => {
     jokesMessage.textContent = '';
     responseMessage.textContent = 'Image processed successfully!';
@@ -389,6 +380,15 @@ const response_function = async (data) => {
     console.error('Error fetching jokes:', err);
     jokesMessage.textContent = 'Error fetching jokes';
     }
+}
+
+function reset_process() {
+    output.innerHTML = '';
+    jokesMessage.textContent = '';
+    positive_percentage.textContent = '';
+    negative_percentage.textContent = '';
+    const btn = document.getElementById('submit-changes');
+    if (btn) btn.remove();
 }
 
 function disableButtons() {
