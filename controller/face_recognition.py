@@ -3,6 +3,7 @@ import cv2
 import os
 from PIL import Image
 import controller.validate_img as validate_img
+import uuid
 
 def load_known_faces(known_path):
     known_encodings = []
@@ -40,7 +41,7 @@ def process_image(unkown_path, output_path, known_face_encodings, known_face_nam
         pil_image = Image.fromarray(face_image)
         if not os.path.exists(output_path):
             os.makedirs(output_path)
-        final_output_path = os.path.join(output_path, f"{name}_{i}_detected.jpg")
+        final_output_path = os.path.join(output_path, f"{name}_{i}_detected_{uuid.uuid4().hex}.jpg")
         pil_image.save(final_output_path)
         print(f"Saved face: {final_output_path}")
         

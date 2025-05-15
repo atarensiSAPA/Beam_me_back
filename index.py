@@ -16,16 +16,7 @@ def delete_folders(folder_path):
             print(f"Deleted folder: {folder_path}")
         except Exception as e:
             print(f"Failed to delete folder: {folder_path}")
-
-def reset_folders(folder_path):
-    if os.path.exists(folder_path):
-        try:
-            shutil.rmtree(folder_path)
-            os.makedirs(folder_path)
-            print(f"Reset folder: {folder_path}")
-        except Exception as e:
-            print(f"Failed to reset folder: {folder_path}")
-    
+            
 app = Flask(__name__)
 CORS(app)
 
@@ -52,6 +43,8 @@ def process():
     if not image_format:
         return jsonify({"error": "Invalid image format"}), 400
     
+    
+    
     # azure_blob_storage.upload_file_to_container("bronze", file.stream, file.filename, os.getenv("CONNECTION_STRING"))
     
     # Save the file locally for processing
@@ -61,8 +54,9 @@ def process():
     if not os.path.exists('images/detected_faces/'):
         os.makedirs('images/detected_faces/')
     else:
-        # vaciar la carpeta
-        reset_folders('images/detected_faces/')
+        delete_folders('images/detected_faces/')
+        os.makedirs('images/detected_faces/')
+        
     file_path = f'images/unknown/{file.filename}'
     file.save(file_path)
 
@@ -75,7 +69,7 @@ def process():
         print("No faces detected in the image.")
         delete_folders('images/unknown/')
         delete_folders('images/detected_faces/')
-        return jsonify({"error": "No faces detected"}), 400
+        return jsonify({"error": "No faces detected"}), 200
     
     # Train the model
     # hugging_face_model.train_model()

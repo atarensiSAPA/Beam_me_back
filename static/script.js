@@ -164,6 +164,7 @@ function reset_function() {
     preview.innerHTML = '<p>No image loaded</p>';
     const btn = document.getElementById('submit-changes');
     if (btn) btn.remove();
+    submitButton.disabled = false;
     positive_percentage.textContent = '';
     negative_percentage.textContent = '';
     if (stream) {
@@ -179,7 +180,6 @@ function reset_function() {
     detectCamerasBtn.disabled = false;
 }
 
-// Interceptar el envío del formulario
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (fileInput.files.length === 0) {
@@ -191,9 +191,8 @@ form.addEventListener('submit', async (e) => {
   formData.append('image', fileInput.files[0]);
   try {
     responseMessage.textContent = 'Processing image...';
-    reset_process();
     disableButtons();
-    post_to_server(formData);
+    post_to_server(formData, "normal");
 
   } catch (err) {
       responseMessage.textContent = 'Error sending image';
@@ -206,6 +205,7 @@ submitRecordBtn.addEventListener('click', async () => {
     if (stream) {
         const track = stream.getVideoTracks()[0];
         const imageCapture = new ImageCapture(track);
+        disableButtons();
         try {
             responseMessage.textContent = 'Processing image from camera...';
             const blob = await imageCapture.takePhoto();
@@ -215,9 +215,8 @@ submitRecordBtn.addEventListener('click', async () => {
             fileInput.files = dataTransfer.files;
             const formData = new FormData();
             formData.append('image', file);
-            reset_process();
-
-            post_to_server(formData);
+            
+            post_to_server(formData , "normal");
         } catch (err) {
             console.error("Error capturing photo:", err);
             console.error(err);
@@ -229,20 +228,20 @@ submitRecordBtn.addEventListener('click', async () => {
 });
 
 let captureInterval = null;
-
 automaticRecordBtn.addEventListener('click', async () => {
     if (stream) {
-        automaticRecordBtn.disabled = true;
         stopCameraBtn.disabled = false;
-        submitRecordBtn.disabled = true;
         responseMessage.textContent = "Automatic camera recording...";
 
-        if (captureInterval !== null) clearInterval(captureInterval);
+        if (captureInterval !== null) {
+            clearInterval(captureInterval);
+        }
 
-        captureInterval = setInterval(async () => {
+        const takeAndSendPhoto = async () => {
             const track = stream.getVideoTracks()[0];
             const imageCapture = new ImageCapture(track);
             try {
+                disableButtons();
                 const blob = await imageCapture.takePhoto();
                 const file = new File([blob], 'captured_image.jpg', { type: 'image/jpeg' });
                 const dataTransfer = new DataTransfer();
@@ -250,26 +249,32 @@ automaticRecordBtn.addEventListener('click', async () => {
                 fileInput.files = dataTransfer.files;
                 const formData = new FormData();
                 formData.append('image', file);
-                reset_process();
-                post_to_server(formData);
+                if (captureInterval === null) {
+                    post_to_server(formData, "automatic");
+                } else {
+                    post_to_server(formData, "normal");
+                }
+                responseMessage.textContent = "Automatic camera recording...";
             } catch (err) {
                 console.error("Error capturing photo:", err);
             }
-        }, 15000);
+        };
+
+        await takeAndSendPhoto();
+
+        captureInterval = setInterval(takeAndSendPhoto, 15000);
     }
 });
 
 stopCameraBtn.addEventListener('click', () => {
     responseMessage.innerHTML = 'Camera stopped.';
-    automaticRecordBtn.disabled = false;
+    enableButtons();
     stopCameraBtn.disabled = true;
-    detectCamerasBtn.disabled = false;
     if (captureInterval !== null) {
         clearInterval(captureInterval);
         captureInterval = null;
-        responseMessage.textContent = "Image capturing stopped. Camera still on.";
-        automaticRecordBtn.disabled = false;
-        stopCameraBtn.disabled = false;
+        responseMessage.textContent = "Image capturing stopped. Camera still on. If takes too long press reset button or refresh the page.";
+        disableButtons();
     }
 });
 
@@ -279,7 +284,7 @@ detectCamerasBtn.addEventListener('click', () => {
     getCameras();
 });
 
-async function post_to_server(sending_data) {
+async function post_to_server(sending_data, type) {
     try {
         const record_res = await fetch('/process', {
             method: 'POST',
@@ -295,18 +300,27 @@ async function post_to_server(sending_data) {
         if (Array.isArray(data)) {
             console.log("Respuesta backend:", data);
             output.innerHTML = data.join("");
-            response_function(data);
+            if (type === "automatic") {
+                jokesMessage.textContent = '';
+                responseMessage.textContent = 'Image captured and processed successfully!';
+                response_function(data);
+            }else {
+                response_function(data);
+                jokesMessage.textContent = '';
+                responseMessage.textContent = 'Image processed successfully!';
+                enableButtons();
+            }
+
         } else {
             responseMessage.textContent = data.error || 'Unexpected format';
-            reset_process();
             enableButtons();
         }
 
     } catch (err) {
         console.error("Error en post_to_server:", err);
         responseMessage.textContent = 'Error processing the image';
-        reset_process();
         enableButtons();
+        stopCameraBtn.disabled = true;
     }
 }
 
@@ -395,10 +409,6 @@ post_emotions = async () => {
 }
 
 const response_function = async (data) => {
-    jokesMessage.textContent = '';
-    responseMessage.textContent = 'Image processed successfully!';
-    enableButtons();
-
     const emotions = ['happy', 'surprise', 'neutral', 'disgust', 'sad', 'fear',  'angry'];
     const puntuation_emotions = [5, 3, 1, -1, -2, -3, -5]
 
@@ -443,25 +453,19 @@ const response_function = async (data) => {
     }
 }
 
-function reset_process() {
-    output.innerHTML = '';
-    jokesMessage.textContent = '';
-    positive_percentage.textContent = '';
-    negative_percentage.textContent = '';
-    const btn = document.getElementById('submit-changes');
-    if (btn) btn.remove();
-}
-
 function disableButtons() {
     submitButton.disabled = true;
-    resetButton.disabled = true;
     submitRecordBtn.disabled = true;
+    automaticRecordBtn.disabled = true;
+    detectCamerasBtn.disabled = true;
 }
 
 function enableButtons() {
     submitButton.disabled = false;
-    resetButton.disabled = false;
     if (videoDevices.length > 0) {
         submitRecordBtn.disabled = false;
+        automaticRecordBtn.disabled = false;
+    }else {
+        detectCamerasBtn.disabled = false;
     }
 }
