@@ -13,7 +13,12 @@ const video = document.getElementById('video');
 const cameraSelect = document.getElementById('camera-select');
 const detectCamerasBtn = document.getElementById('detect-cameras-btn');
 const submitRecordBtn = document.getElementById('capture-btn');
+const automaticRecordBtn = document.getElementById('automatic-record-btn');
+const stopCameraBtn = document.getElementById('stop-camera-btn');
+const outputWrapper = document.getElementById('output-wrapper');
 submitRecordBtn.disabled = true;
+automaticRecordBtn.disabled = true;
+stopCameraBtn.disabled = true;
 
 setTimeout(() => {
     const titleContainer = document.querySelector('.title-container');
@@ -57,8 +62,14 @@ async function getCameras() {
 
         if (videoDevices.length > 0) {
             submitRecordBtn.disabled = false;
+            automaticRecordBtn.disabled = false;
+            detectCamerasBtn.disabled = true;
+
         } else {
             submitRecordBtn.disabled = true;
+            automaticRecordBtn.disabled = true;
+            stopCameraBtn.disabled = true;
+            detectCamerasBtn.disabled = false;
         }
 
         // Si la cámara actual sigue disponible, no la reinicies
@@ -162,7 +173,10 @@ function reset_function() {
         videoDevices = [];
         cameraSelect.innerHTML = '';
         submitRecordBtn.disabled = true;
+        stopCameraBtn.disabled = true;
+        automaticRecordBtn.disabled = true;
     }
+    detectCamerasBtn.disabled = false;
 }
 
 // Interceptar el envío del formulario
@@ -179,22 +193,7 @@ form.addEventListener('submit', async (e) => {
     responseMessage.textContent = 'Processing image...';
     reset_process();
     disableButtons();
-    const res = await fetch('/process', {
-    method: 'POST',
-    body: formData,
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-        console.log(data);
-        output.innerHTML = data.join("");
-        response_function(data);
-
-    } else {
-        responseMessage.textContent = data.error || 'Unknown error';
-        enableButtons();
-    }
+    post_to_server(formData);
 
   } catch (err) {
       responseMessage.textContent = 'Error sending image';
@@ -218,22 +217,7 @@ submitRecordBtn.addEventListener('click', async () => {
             formData.append('image', file);
             reset_process();
 
-            const record_res = await fetch('/process', {
-            method: 'POST',
-            body: formData,
-            });
-            const record_data = await record_res.json();
-            if (record_res.ok) {
-                console.log(record_data);
-                output.innerHTML = record_data.join("");
-                response_function(record_data);
-
-            } else {
-                responseMessage.textContent = record_data.error || 'Unknown error';
-                reset_process();
-                output.innerHTML = record_data.join("");
-                enableButtons();
-            }
+            post_to_server(formData);
         } catch (err) {
             console.error("Error capturing photo:", err);
             console.error(err);
@@ -244,12 +228,89 @@ submitRecordBtn.addEventListener('click', async () => {
     }
 });
 
+let captureInterval = null;
+
+automaticRecordBtn.addEventListener('click', async () => {
+    if (stream) {
+        automaticRecordBtn.disabled = true;
+        stopCameraBtn.disabled = false;
+        submitRecordBtn.disabled = true;
+        responseMessage.textContent = "Automatic camera recording...";
+
+        if (captureInterval !== null) clearInterval(captureInterval);
+
+        captureInterval = setInterval(async () => {
+            const track = stream.getVideoTracks()[0];
+            const imageCapture = new ImageCapture(track);
+            try {
+                const blob = await imageCapture.takePhoto();
+                const file = new File([blob], 'captured_image.jpg', { type: 'image/jpeg' });
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+                const formData = new FormData();
+                formData.append('image', file);
+                reset_process();
+                post_to_server(formData);
+            } catch (err) {
+                console.error("Error capturing photo:", err);
+            }
+        }, 15000);
+    }
+});
+
+stopCameraBtn.addEventListener('click', () => {
+    responseMessage.innerHTML = 'Camera stopped.';
+    automaticRecordBtn.disabled = false;
+    stopCameraBtn.disabled = true;
+    detectCamerasBtn.disabled = false;
+    if (captureInterval !== null) {
+        clearInterval(captureInterval);
+        captureInterval = null;
+        responseMessage.textContent = "Image capturing stopped. Camera still on.";
+        automaticRecordBtn.disabled = false;
+        stopCameraBtn.disabled = false;
+    }
+});
+
+
+
 detectCamerasBtn.addEventListener('click', () => {
     getCameras();
 });
 
+async function post_to_server(sending_data) {
+    try {
+        const record_res = await fetch('/process', {
+            method: 'POST',
+            body: sending_data,
+        });
+
+        if (!record_res.ok) {
+            throw new Error(`Server returned ${record_res.status}`);
+        }
+
+        const data = await record_res.json();
+
+        if (Array.isArray(data)) {
+            console.log("Respuesta backend:", data);
+            output.innerHTML = data.join("");
+            response_function(data);
+        } else {
+            responseMessage.textContent = data.error || 'Unexpected format';
+            reset_process();
+            enableButtons();
+        }
+
+    } catch (err) {
+        console.error("Error en post_to_server:", err);
+        responseMessage.textContent = 'Error processing the image';
+        reset_process();
+        enableButtons();
+    }
+}
+
 show_percentages = (emotions, puntuation_emotions) => {
-    // show the percentage of all the emotions with the array of puntuation_emotions
     let totalPositive = 0;
     let totalNegative = 0;
 
@@ -287,7 +348,7 @@ post_emotions = async () => {
         submitChangesBtn.classList.add('btn');
         submitChangesBtn.style.marginTop = '1rem';
     
-        document.getElementById('output-wrapper').appendChild(submitChangesBtn);
+        outputWrapper.appendChild(submitChangesBtn);
     
         // Asignar comportamiento
         submitChangesBtn.addEventListener('click', async () => {
