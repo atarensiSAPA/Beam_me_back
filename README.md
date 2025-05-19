@@ -27,7 +27,7 @@ Aquest projecte permet detectar cares humanes i reconèixer les seves emocions (
 - **JavaScript / HTML / CSS** (frontend)
 - **Azure Blob Storage** (per emmagatzematge en el núvol, opcional)
 
-## 🚀 Instal·lació i execució
+## Instal·lació i execució
 
 ```bash
 # Clona el repositori
